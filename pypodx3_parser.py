@@ -39,6 +39,13 @@ class EffectDump:
         
         which = cmdData[0]
         binData = ''.join(map(chr, cmdData[1:]))
+        fileName = "line6_x3live_effect_dump/"+''.join(map(chr, cmdData[1:16])).rstrip()+".bin"
+
+	print fileName
+	f = open(fileName,"w")
+	f.write(binData)
+	f.close()
+
         if which != 1:
             print("ERROR: Unexpected value 'which': %d" % (which))
             return

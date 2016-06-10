@@ -43,7 +43,7 @@ def formathex(buffer):
 
 class POD:
     VENDOR_ID     = 0x0E41   #: Vendor Id
-    PRODUCT_ID    = 0x414A   #: Product Id for POD X3 bean
+    PRODUCT_ID    = 0x414B   #: Product Id for POD X3 bean
     INTERFACE_ID  = 1        #: The interface we use to talk to the device
     BULK_IN_EP   = 0x81      #: Endpoint for Bulk reads
     BULK_OUT_EP  = 0x01      #: Endpoint for Bulk writes
