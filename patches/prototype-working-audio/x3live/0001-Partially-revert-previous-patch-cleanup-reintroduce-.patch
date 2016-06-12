@@ -1,0 +1,79 @@
+From 641ad3a80daa40f7c272471154fe3dbf08754444 Mon Sep 17 00:00:00 2001
+From: Eddi De Pieri <eddi@depieri.net>
+Date: Sun, 12 Jun 2016 18:20:33 +0200
+Subject: [PATCH 1/2] Partially revert previous patch cleanup (reintroduce
+ usb_line6_podhd_message)
+
+---
+ sound/usb/line6/podhd.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+
+diff --git a/sound/usb/line6/podhd.c b/sound/usb/line6/podhd.c
+index e80eb8b..91f573c 100644
+--- a/sound/usb/line6/podhd.c
++++ b/sound/usb/line6/podhd.c
+@@ -58,6 +58,61 @@ struct usb_line6_podhd {
+ 	int firmware_version;
+ };
+ 
++/**
++ * Sequences:
++ *
++ * Init:
++ *
++ * out: 14 00 01 00|04 00 0A 40 01 03 00 20 00 00 00 00 00 00 00 00 00 00 00 00
++ * out: 0C 00 01 00|02 00 0A 40 01 03 00 21 03 00 00 00
++ *
++ * in:  14 00 01 00|04 00 0A 03 01 40 00 22 00 00 00 00 03 00 00 00 00 00 00 00
++**/
++
++struct usb_line6_podhd_message {
++	u8 packet_data_len;
++	u8 unkn1;
++#define PODHD_MSG_FLAG_FIRST (0x01)
++#define PODHD_MSG_FLAG_FOLLOWUP (0x04)
++	u8 flags;
++	u8 unkn2;
++
++	u8 packet_data[];
++} __attribute__((packed));
++
++struct usb_line6_podhd_packet {
++#define PODHD_PKT_TYPE_FULL_CONFIG 0x01
++#define PODHD_PKT_TYPE_SET_EFFECT 0x02
++#define PODHD_PKT_TYPE_INIT 0x03 /* ??? */
++#define PODHD_PKT_TYPE_FLAG_SET 0x04 /* turn effects on/off */
++#define PODHD_PKT_TYPE_FLOAT_PARAMETER1 0x05
++#define PODHD_PKT_TYPE_FLOAT_PARAMETER2 0x06
++	u8 pkt_type;
++	union {
++		u8 data[256];
++		struct {
++			/* pkt_types 01/02/04/05/06 */
++			/* input from POD:
++			 * usually 01: 04 0A 03 01|02 40 00 01 [...]
++			 * usually 04: 00 0A 03 01|02 40 00 01 [...]
++			 *                   ^        ^
++			 *                   40       30 ... output
++			 */
++			u8 unkn1[2];
++			u8 src;
++			u8 flag1;
++			u8 dst;
++			u8 unkn2;
++			u8 subdata_len;
++			u8 data[];
++		} contents_1 ;
++		struct {
++			/* pkt_type 03 */
++			/* 10 00 01 00 03 00 02 01 04 89|2E 40 00 00 00 00 FF 00 00 00 02 */
++		} contents_2;
++	} packet;
++} __attribute__((packed));
++
+ #define PODHD_BYTES_PER_CHANNEL 3	/* 24bit audio (stereo) */
+ 
+ static struct snd_ratden podhd_ratden = {
+-- 
+2.5.0
+
